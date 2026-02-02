@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Računi kuća</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+
+  <style>
+    :root { --bg:#0b1020; --card:#111827; --muted:#9ca3af; --text:#e5e7eb; --line:#243046; --btn:#2563eb; --danger:#dc2626; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#050816,#0b1020); color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto;padding:18px}
+    .top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+    h1{margin:0;font-size:24px}
+    .sub{margin-top:6px;color:var(--muted);font-size:13px}
+    .row{display:flex;gap:10px}
+    .card{background:rgba(17,24,39,.9); border:1px solid #243046; border-radius:16px; padding:14px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+    .stat .k{color:var(--muted);font-size:12px}
+    .stat .v{font-size:18px;font-weight:650}
+    .controls{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    input,select{background:#0b1222;border:1px solid #243046;color:var(--text);border-radius:12px;padding:10px 12px}
+    .search{min-width:260px;flex:1}
+    button{border:0;border-radius:12px;padding:10px 12px;font-weight:650;color:#fff;background:#2563eb;cursor:pointer}
+    button.secondary{background:#334155}
+    button.danger{background:#dc2626}
+    .list{margin-top:12px;display:grid;gap:10px}
+    .item{display:flex;justify-content:space-between;gap:10px}
+    .money{font-size:18px;font-weight:750}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Računi kuća</h1>
+        <div class="sub">Struja • Plin • Voda • Komunalno</div>
+      </div>
+      <div class="row">
+        <button id="add">+ Dodaj račun</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="card stat"><div class="k">Ukupno</div><div class="v" id="sum">€0,00</div></div>
+      <div class="card stat"><div class="k">Struja</div><div class="v" id="s1">€0,00</div></div>
+      <div class="card stat"><div class="k">Plin</div><div class="v" id="s2">€0,00</div></div>
+      <div class="card stat"><div class="k">Ostalo</div><div class="v" id="s3">€0,00</div></div>
+    </div>
+
+    <div class="card controls">
+      <input class="search" id="q" placeholder="Pretraži…" />
+      <select id="cat">
+        <option value="all">Sve</option>
+        <option value="struja">Struja</option>
+        <option value="plin">Plin</option>
+        <option value="ostalo">Ostalo</option>
+      </select>
+      <button class="secondary" id="reset">Reset</button>
+    </div>
+
+    <div class="list" id="list"></div>
+  </div>
+
+  <script>
+    const KEY="racuni_kuca";
+    const €=n=>new Intl.NumberFormat("hr-HR",{style:"currency",currency:"EUR"}).format(n||0);
+    let items=JSON.parse(localStorage.getItem(KEY)||"[]");
+    const $=id=>document.getElementById(id);
+
+    function render(){
+      const q=$("q").value.toLowerCase();
+      const c=$("cat").value;
+      let a=items.filter(x=>(c==="all"||x.c===c)&&(`${x.n} ${x.a}`).toLowerCase().includes(q));
+      $("list").innerHTML="";
+      let s=0,s1=0,s2=0,s3=0;
+      a.forEach(x=>{
+        s+=x.a;
+        if(x.c==="struja")s1+=x.a; else if(x.c==="plin")s2+=x.a; else s3+=x.a;
+        $("list").innerHTML+=`<div class="card item"><div>${x.n}</div><div class="money">${€(x.a)}</div></div>`;
+      });
+      $("sum").textContent=€(s); $("s1").textContent=€(s1); $("s2").textContent=€(s2); $("s3").textContent=€(s3);
+      localStorage.setItem(KEY,JSON.stringify(items));
+    }
+
+    $("add").onclick=()=>{
+      const n=prompt("Naziv / dobavljač:");
+      const a=parseFloat(prompt("Iznos (EUR):").replace(",","."))||0;
+      const c=prompt("Kategorija (struja/plin/ostalo):","struja");
+      if(n) items.unshift({n,a,c});
+      render();
+    };
+    $("reset").onclick=()=>{$("q").value="";$("cat").value="all";render();}
+    $("q").oninput=$("cat").onchange=render;
+    render();
+  </script>
+</body>
+</html>
